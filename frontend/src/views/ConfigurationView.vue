@@ -153,7 +153,7 @@
                   class="form-control"
                   id="notifyEmails"
                   placeholder="admin@example.com, support@example.com"
-                  value="admin@nakuru-Travel Docs LLM.co.ke"
+                  value="admin@nakuru-SME Doc Generator.co.ke"
                 />
               </div>
               <label class="form-label">Notify on:</label>

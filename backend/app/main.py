@@ -49,7 +49,7 @@ def custom_openapi():
     openapi_description = f"{desc}\n\n\nmade with ❤️"
 
     openapi_schema = get_openapi(
-        title="Travel Docs LLM - Backend APIs",
+        title="SME Doc Generator - Backend APIs",
         version="1.1.0",
         description=openapi_description,
         routes=app.routes,

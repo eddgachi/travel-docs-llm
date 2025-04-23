@@ -56,7 +56,7 @@ const router = createRouter({
 
 // Update browser tab title
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} | Travel Docs LLM` : 'Travel Docs LLM Dashboard'
+  document.title = to.meta.title ? `${to.meta.title} | SME Doc Generator` : 'SME Doc Generator Dashboard'
   next()
 })
 
