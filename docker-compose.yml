@@ -30,13 +30,13 @@ services:
     environment:
       POSTGRES_USER: fastapi_user
       POSTGRES_PASSWORD: fastapi_password
-      POSTGRES_DB: sme_doc_generator
+      POSTGRES_DB: travel_docs_llm
     ports:
       - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U fastapi_user -d sme_doc_generator']
+      test: ['CMD-SHELL', 'pg_isready -U fastapi_user -d travel_docs_llm']
       interval: 5s
       timeout: 5s
       retries: 5
