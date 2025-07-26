@@ -1,8 +1,9 @@
 # backend/app/routes.py
-import uuid
+import json
 from datetime import datetime
 from typing import List
 
+import google.generativeai as genai  # Import the Google Generative AI library
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -15,12 +16,7 @@ from .schemas import (
     TravelDocumentRequest,
     TravelDocumentResponse,
 )
-from .services import (
-    DEFAULT_CONFIGS,
-    get_config_value,
-    query_travel_documents,
-    seed_default_configs,
-)
+from .services import get_config_value, get_google_api_key
 from .session import get_db
 
 router = APIRouter(prefix="/api", tags=["Travel Documents"])
@@ -44,8 +40,145 @@ def ask_travel_documents(
     Get travel document requirements between two countries.
     Returns structured information about visa documents, passport requirements,
     additional documents, and travel advisories.
+
+    Example request:
+    {
+        "origin": "Kenya",
+        "destination": "Ireland"
+    }
+
+    Example response:
+    {
+        "visa_documents": ["Valid visa application form", "Passport photos"],
+        "passport_requirements": ["Valid for 6 months", "2 blank pages"],
+        "additional_documents": ["Return ticket", "Proof of funds"],
+        "advisories": ["Check COVID requirements", "Register with embassy"]
+    }
     """
-    return query_travel_documents(db, request.origin, request.destination)
+    try:
+        # Get configuration values
+        api_key = get_google_api_key(db)
+        llm_model = get_config_value(db, "llm_model", "gemini-1.5-flash-latest")
+        temperature = float(get_config_value(db, "llm_temperature", "0.3"))
+        enable_history = (
+            get_config_value(db, "enable_history", "true").lower() == "true"
+        )
+        response_language = get_config_value(db, "default_response_language", "English")
+
+        # Configure Gemini client
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(llm_model)
+
+        # Create the prompt with clear instructions for structured output
+        prompt = f"""
+        You are a travel document expert. Provide detailed requirements for traveling from {request.origin} to {request.destination}.
+        
+        Respond with a JSON object having exactly these fields:
+        - "visa_documents": array of strings listing required visa documents
+        - "passport_requirements": array of strings listing passport requirements
+        - "additional_documents": array of strings listing other required documents
+        - "advisories": array of strings listing important travel advisories
+        
+        Requirements:
+        1. Be accurate and up-to-date (current year is {datetime.now().year})
+        2. Include any COVID-19 requirements if applicable
+        3. Response must be in {response_language}
+        4. Each array should have at least 2 items
+        5. Format for direct JSON parsing
+        
+        Example structure:
+        {{
+            "visa_documents": ["item1", "item2"],
+            "passport_requirements": ["item1", "item2"],
+            "additional_documents": ["item1", "item2"],
+            "advisories": ["item1", "item2"]
+        }}
+        """
+
+        # Make the API call to Gemini
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=temperature,
+            ),
+        )
+
+        # Parse and validate the response
+        if not response or not response.candidates:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No response received from Gemini API",
+            )
+
+        # Extract text from the first candidate
+        response_text = ""
+        for part in response.candidates[0].content.parts:
+            if hasattr(part, "text"):
+                response_text = part.text
+                break
+
+        if not response_text:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Empty response from Gemini API",
+            )
+
+        # Clean the response (sometimes Gemini adds markdown formatting)
+        cleaned_response = (
+            response_text.strip().replace("```json", "").replace("```", "").strip()
+        )
+
+        try:
+            result = json.loads(cleaned_response)
+
+            # Validate the response structure
+            required_fields = [
+                "visa_documents",
+                "passport_requirements",
+                "additional_documents",
+                "advisories",
+            ]
+            if not all(field in result for field in required_fields):
+                raise ValueError("Missing required fields in response")
+
+            # Convert all values to lists if they aren't already
+            for field in required_fields:
+                if not isinstance(result[field], list):
+                    result[field] = [str(result[field])]
+
+            # Save to history if enabled
+            if enable_history:
+                db_query = TravelDocumentQuery(
+                    origin_country=request.origin,
+                    destination_country=request.destination,
+                    visa_documents=json.dumps(result["visa_documents"]),
+                    passport_requirements=json.dumps(result["passport_requirements"]),
+                    additional_documents=json.dumps(result["additional_documents"]),
+                    travel_advisories=json.dumps(result["advisories"]),
+                )
+                db.add(db_query)
+                db.commit()
+
+            return result
+
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to parse Gemini response: {str(e)}. Response was: {response_text}",
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Invalid response structure from Gemini: {str(e)}",
+            )
+
+    except HTTPException:
+        raise  # Re-raise existing HTTP exceptions
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing travel document request: {str(e)}",
+        )
 
 
 @router.get(

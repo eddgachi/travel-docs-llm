@@ -13,5 +13,6 @@ httpx
 aiohttp
 pyodbc
 requests
+google
 google-generativeai
 google-api-core
