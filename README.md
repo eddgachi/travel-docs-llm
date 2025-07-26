@@ -40,7 +40,7 @@ Travel Documents Advisor is a full-stack web application that leverages Large La
 
 > _Add your screenshots here to showcase the UI/UX of each page._
 
-### ### Dashboard
+### Dashboard
 
 ![Dashboard View](./assets/screenshots/one.png)
 _The interactive dashboard displaying generated travel document requirements for travel from Kenya to Japan, including visa documents, passport requirements, and travel advisories with a clean, organized presentation._
@@ -53,12 +53,12 @@ _History page showing past document generation requests, with filtering and down
 
 ### ModelSettingsView
 
-![ModelSettingsView](./assets/screenshots/modelsettingsview.png)
+![ModelSettingsView](./assets/screenshots/five.png)
 _View for configuring your LLM (API key, model, temperature, max tokens) and testing connectivity._
 
 ### ApiDocsView
 
-![ApiDocsView](./assets/screenshots/five.png)
+![ApiDocsView](./assets/screenshots/six.png)
 _Embedded Swagger/OpenAPI interface for exploring backend APIs._
 
 ---
