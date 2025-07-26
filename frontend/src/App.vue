@@ -22,27 +22,17 @@
         <ul class="list-unstyled">
           <li>
             <router-link to="/" class="nav-link" :class="theme === 'dark' ? 'text-light' : 'text-dark'"
-              ><i class="fas fa-fw fa-tachometer-alt me-2"></i>Dashboard</router-link
+              ><i class="fas fa-fw fa-home me-2"></i>Document Generator</router-link
             >
           </li>
           <li>
             <router-link to="/history" class="nav-link" :class="theme === 'dark' ? 'text-light' : 'text-dark'"
-              ><i class="fas fa-fw fa-history me-2"></i>Sync History</router-link
+              ><i class="fas fa-fw fa-history me-2"></i>History</router-link
             >
           </li>
           <li>
-            <router-link to="/logs" class="nav-link" :class="theme === 'dark' ? 'text-light' : 'text-dark'"
-              ><i class="fas fa-fw fa-clipboard-list me-2"></i>Detailed Logs</router-link
-            >
-          </li>
-          <li>
-            <router-link to="/audit" class="nav-link" :class="theme === 'dark' ? 'text-light' : 'text-dark'"
-              ><i class="fas fa-fw fa-user-secret me-2"></i>Audit Trail</router-link
-            >
-          </li>
-          <li>
-            <router-link to="/config" class="nav-link" :class="theme === 'dark' ? 'text-light' : 'text-dark'"
-              ><i class="fas fa-fw fa-cog me-2"></i>Configuration</router-link
+            <router-link to="/settings" class="nav-link" :class="theme === 'dark' ? 'text-light' : 'text-dark'"
+              ><i class="fas fa-fw fa-cog me-2"></i>Settings</router-link
             >
           </li>
         </ul>
@@ -59,7 +49,7 @@
                 <i :class="['fas fa-bars', theme === 'dark' ? 'text-light' : 'text-dark']"></i>
               </button>
               <h1 class="h6 mb-0 fw-semibold d-none d-md-inline" :class="theme === 'dark' ? 'text-light' : 'text-dark'">
-                <i class="fas fa-sync-alt me-2 text-primary opacity-75"></i> Qona Sacco Data Sync
+                <i class="fas fa-passport me-2 text-primary opacity-75"></i> Travel Documents Advisor
               </h1>
               <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle fw-medium">
                 <i class="fas fa-check-circle me-1"></i> Connected
@@ -70,6 +60,13 @@
               <button class="btn btn-sm" @click="toggleTheme" :class="theme === 'dark' ? 'text-warning' : 'text-dark'">
                 <i :class="['fas', theme === 'dark' ? 'fa-sun' : 'fa-moon']"></i>
               </button>
+              <!-- Add notification bell if needed -->
+              <!-- <button class="btn btn-sm position-relative">
+                <i class="fas fa-bell"></i>
+                <span v-if="unreadNotifications" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  {{ unreadNotifications }}
+                </span>
+              </button> -->
             </div>
           </div>
         </div>
@@ -89,8 +86,7 @@
           theme === 'dark' ? 'bg-black border-secondary' : 'bg-light border-light-subtle',
         ]"
       >
-        © {{ new Date().getFullYear() }} Qona Sacco Data Sync | Powered by
-        <a href="https://jasco.co.ke/" target="_blank">Jasco Communications</a> | Version 1.2.0 |
+        © {{ new Date().getFullYear() }} Travel Documents Advisor | Version 1.0.0 |
         <a href="#">Privacy Policy</a>
       </footer>
     </div>
@@ -98,24 +94,13 @@
 </template>
 
 <script>
-// Import Font Awesome if not loaded globally
-// import '@fortawesome/fontawesome-free/css/all.css';
-
-// Import potential global components like NotificationPanel, ToastContainer
-// import NotificationPanel from './components/NotificationPanel.vue';
-// import ToastContainer from './components/ToastContainer.vue';
-
 export default {
   name: 'App',
-  // components: { NotificationPanel, ToastContainer },
   data() {
     return {
       theme: 'light',
       isSidebarOpen: false,
-      // Move global state here if not using Vuex/Pinia
-      // isNotificationPanelOpen: false,
-      // unreadNotifications: 2,
-      // currentUser: { name: 'Nakuru Admin', id: 'admin01' }
+      // unreadNotifications: 0, // Uncomment if adding notifications
     }
   },
   methods: {
@@ -124,24 +109,18 @@ export default {
       document.body.setAttribute('data-bs-theme', this.theme)
       localStorage.setItem('dashboardTheme', this.theme)
     },
-    // other global methods (toggle notifications, etc.)
   },
   watch: {
-    // Close mobile sidebar on route change
     $route() {
       this.isSidebarOpen = false
     },
   },
   mounted() {
-    // Apply theme on initial load
     const savedTheme = localStorage.getItem('dashboardTheme')
     if (savedTheme) {
       this.theme = savedTheme
       document.body.setAttribute('data-bs-theme', this.theme)
     } else {
-      // Set default based on system preference?
-      // const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      // this.theme = prefersDark ? 'dark' : 'light';
       document.body.setAttribute('data-bs-theme', this.theme)
     }
   },
@@ -168,10 +147,10 @@ body {
 
 /* --- Sidebar Styles --- */
 .sidebar {
-  width: 260px; /* Slightly wider */
+  width: 260px;
   position: fixed;
   top: 0;
-  left: -260px; /* Hidden by default on mobile */
+  left: -260px;
   height: 100vh;
   transition: left 0.3s ease-in-out;
   z-index: 1050;
@@ -179,12 +158,10 @@ body {
 }
 
 .sidebar.open {
-  /* Mobile open state */
   left: 0;
 }
 
 .sidebar-backdrop {
-  /* Mobile backdrop */
   position: fixed;
   top: 0;
   left: 0;
@@ -207,7 +184,7 @@ body {
 /* Active link styling */
 .sidebar-nav .nav-link.router-link-exact-active {
   background-color: var(--bs-primary-bg-subtle);
-  color: var(--bs-primary-text-emphasis) !important; /* Ensure text color overrides */
+  color: var(--bs-primary-text-emphasis) !important;
   font-weight: 500;
 }
 [data-bs-theme='dark'] .sidebar-nav .nav-link.router-link-exact-active {
@@ -227,21 +204,20 @@ body {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Important for flex item wrapping */
+  min-width: 0;
   transition: margin-left 0.3s ease-in-out;
 }
 
 @media (min-width: 992px) {
-  /* lg breakpoint */
   .sidebar {
-    left: 0; /* Always open on large screens */
-    z-index: 1000; /* Below sticky header */
+    left: 0;
+    z-index: 1000;
   }
   .main-content {
-    margin-left: 260px; /* Push content over */
+    margin-left: 260px;
   }
   .app-wrapper.sidebar-collapsed .sidebar {
-    left: -260px; /* Example for collapsing */
+    left: -260px;
   }
   .app-wrapper.sidebar-collapsed .main-content {
     margin-left: 0;
@@ -264,8 +240,8 @@ body {
   z-index: 1020;
 }
 
-/* Minor adjustments if needed */
+/* Minor adjustments */
 body {
-  overflow-x: hidden; /* Prevent horizontal scrollbars caused by transitions */
+  overflow-x: hidden;
 }
 </style>

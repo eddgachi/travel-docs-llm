@@ -2,6 +2,7 @@
 import json
 from datetime import datetime
 from typing import List
+from uuid import UUID
 
 import google.generativeai as genai  # Import the Google Generative AI library
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -179,6 +180,62 @@ def ask_travel_documents(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing travel document request: {str(e)}",
         )
+
+
+@router.get("/recent-queries", response_model=List[TravelDocumentQuerySchema])
+def get_recent_queries(limit: int = 5, db: Session = Depends(get_db)):
+    """
+    Get recent travel document queries (for dashboard sidebar)
+    """
+    queries = (
+        db.query(TravelDocumentQuery)
+        .order_by(TravelDocumentQuery.queried_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    # Convert JSON strings back to lists
+    result = []
+    for query in queries:
+        result.append(
+            {
+                "id": query.id,
+                "origin_country": query.origin_country,
+                "destination_country": query.destination_country,
+                "queried_at": query.queried_at,
+                "visa_documents": json.loads(query.visa_documents),
+                "passport_requirements": json.loads(query.passport_requirements),
+                "additional_documents": json.loads(query.additional_documents),
+                "travel_advisories": json.loads(query.travel_advisories),
+            }
+        )
+    return result
+
+
+@router.get("/query/{query_id}", response_model=TravelDocumentQuerySchema)
+def get_query_details(query_id: UUID, db: Session = Depends(get_db)):
+    """
+    Get details of a specific query
+    """
+    query = (
+        db.query(TravelDocumentQuery).filter(TravelDocumentQuery.id == query_id).first()
+    )
+
+    if not query:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Query not found"
+        )
+
+    return {
+        "id": query.id,
+        "origin_country": query.origin_country,
+        "destination_country": query.destination_country,
+        "visa_documents": json.loads(query.visa_documents),
+        "passport_requirements": json.loads(query.passport_requirements),
+        "additional_documents": json.loads(query.additional_documents),
+        "travel_advisories": json.loads(query.travel_advisories),
+        "queried_at": query.queried_at,
+    }
 
 
 @router.get(

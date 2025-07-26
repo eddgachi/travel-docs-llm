@@ -1,9 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import AuditTrailView from '../views/AuditTrailView.vue'
-import ConfigurationView from '../views/ConfigurationView.vue'
 import DashboardView from '../views/DashboardView.vue'
-import DetailedLogsView from '../views/DetailedLogsView.vue'
 import HistoryView from '../views/HistoryView.vue'
+import SettingsView from '../views/SettingsView.vue'
 
 const routes = [
   {
@@ -19,33 +17,11 @@ const routes = [
     meta: { title: 'Sync History' },
   },
   {
-    path: '/logs',
-    name: 'DetailedLogs',
-    component: DetailedLogsView,
-    meta: { title: 'Detailed Logs' },
+    path: '/settings',
+    name: 'Settings',
+    component: SettingsView,
+    meta: { title: 'Settings' },
   },
-  // Optional: Route for logs specific to a job
-  {
-    path: '/logs/:jobId',
-    name: 'JobLogs',
-    component: DetailedLogsView, // Reuse the same component
-    props: true, // Pass route params as props
-    meta: { title: 'Job Logs' },
-  },
-  {
-    path: '/audit',
-    name: 'AuditTrail',
-    component: AuditTrailView,
-    meta: { title: 'Audit Trail' },
-  },
-  {
-    path: '/config',
-    name: 'Configuration',
-    component: ConfigurationView,
-    meta: { title: 'Configuration' },
-  },
-  // Add a fallback route for 404?
-  // { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundView }
 ]
 
 const router = createRouter({
